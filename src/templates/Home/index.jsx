@@ -1,11 +1,73 @@
 import './Style.css';
-import { Component } from 'react';
-import { loadposts } from '../../Utility/load-post'
+import { React, useEffect, useState, useCallback } from 'react';
+import { loadposts } from '../../Utility/load-post';
 import { Post } from '../../components/Post';
 import { Button } from '../../components/Button';
 import { TextInput } from '../../components/TextInput';
 
-export class Home extends Component {
+export const Home = () => {
+  /* state = {
+    posts: [],
+    allPosts: [],
+    page: 0,
+    pagePerPosts: 10,
+    searchValue: ''
+  } */
+  const [posts, setPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]);
+  const [page, setPage] = useState(0);
+  const [pagePerPosts] = useState(10);
+  const [searchValue, setSearchValue] = useState('');
+
+  const noMorePosts = page + pagePerPosts >= allPosts.length;
+
+  const filteredPost = searchValue
+    ? allPosts.filter((post) => post.title.toLowerCase().includes(searchValue.toLowerCase()))
+    : posts;
+
+  const handleLoadPosts = useCallback(async (page, pagePerPosts) => {
+    const loads = await loadposts();
+
+    setPosts(loads.slice(page, pagePerPosts));
+    setAllPosts(loads);
+  }, []);
+
+  const loadMorePosts = () => {
+    const nextPage = page + pagePerPosts;
+    const nextPosts = allPosts.slice(nextPage, nextPage + pagePerPosts);
+
+    posts.push(...nextPosts);
+    setPosts(posts);
+    setPage(nextPage);
+  };
+
+  const handleCharge = (e) => {
+    const { value } = e.target;
+    setSearchValue(value);
+  };
+
+  useEffect(() => {
+    handleLoadPosts(0, pagePerPosts);
+  }, [handleLoadPosts, pagePerPosts]);
+
+  return (
+    <section className="container">
+      <div className="search-container">
+        {!!searchValue && <h1>Valor de busca: {searchValue}</h1>}
+
+        <TextInput searchValue={searchValue} handleCharge={handleCharge} />
+      </div>
+
+      {filteredPost.length > 0 ? <Post posts={filteredPost} /> : <p>Não existe posts</p>}
+
+      <div className="button-container">
+        {!searchValue && <Button text="Carregar mais Posts" onClick={loadMorePosts} disabled={noMorePosts} />}
+      </div>
+    </section>
+  );
+};
+
+/* export class Home2 extends Component {
 
   state = {
     posts: [],
@@ -85,7 +147,7 @@ export class Home extends Component {
       </section>
     );
   }
-}
+} */
 /* function App() {
   return (
     <div className="App">
